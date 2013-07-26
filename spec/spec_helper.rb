@@ -7,6 +7,7 @@ $LOAD_PATH.unshift('lib') unless $LOAD_PATH.include?('lib')
 require 'dm-web-adapter'
 require 'dm-core/spec/shared/adapter_spec'
 
+# Uncomment this line to see all the magical debugging goodness
 #DataMapper::Logger.new(STDOUT, :debug)
 
 ROOT = Pathname(__FILE__).dirname.parent

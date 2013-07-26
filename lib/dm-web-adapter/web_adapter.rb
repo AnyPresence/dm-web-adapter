@@ -1,6 +1,6 @@
 module DataMapper
   module Adapters
-    class WebAdapter < AbstractAdapter
+    class WebAdapter < DataMapper::Adapters::AbstractAdapter
       
     end
   end
