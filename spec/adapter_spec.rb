@@ -3,7 +3,10 @@ require 'spec_helper'
 describe DataMapper::Adapters::WebAdapter do
   
   before :all do
-   @adapter = DataMapper.setup(:default, :adapter => 'web', :host => 'localhost', :port => 5000)      
+   @adapter = DataMapper.setup(:default, :adapter => 'web', :scheme => 'http', :host => 'localhost', :port => 5000, :mappings => {
+     :incoming_contacts => {:create_path => 'api/v1/', :create_form_name => 'form' }
+   }
+   )      
   end
   
   describe '#create' do

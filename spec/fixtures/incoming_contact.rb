@@ -8,4 +8,5 @@ class IncomingContact
   property :contact_by_email, Boolean
   property :created, DateTime
   
+  storage_names[:default] = 'incoming_contacts'
 end
