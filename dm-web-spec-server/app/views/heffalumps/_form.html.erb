@@ -1,0 +1,31 @@
+<%= form_for @heffalump do |f| %>
+  <% if @heffalump.errors.any? %>
+  <div id="errorExplanation">
+    <h2><%= pluralize(@heffalump.errors.count, "error") %> prohibited
+      this heffalump from being saved:</h2>
+    <ul>
+    <% @heffalump.errors.full_messages.each do |msg| %>
+      <li><%= msg %></li>
+    <% end %>
+    </ul>
+  </div>
+  <% end %>
+  <p>
+    <%= f.label :color %><br>
+    <%= f.text_field :color %>
+  </p>
+ 
+  <p>
+    <%= f.label :num_spots %><br>
+    <%= f.text_field :num_spots %>
+  </p>
+  
+  <p>
+    <%= f.label :striped %><br>
+    <%= f.check_box :striped %>
+  </p>
+ 
+  <p>
+    <%= f.submit %>
+  </p>
+<% end %>

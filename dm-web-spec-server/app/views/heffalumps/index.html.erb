@@ -1,0 +1,25 @@
+<h1>Listing Heffalumps</h1>
+ 
+<table>
+  <tr>
+    <th>Color</th>
+    <th>Number of Spots</th>
+    <th>Striped</th>
+    <th/>
+    <th/>
+    <th/>
+  </tr>
+ 
+  <% @heffalumps.each do |heffalump| %>
+    <tr>
+      <td><%= heffalump.color %></td>
+      <td><%= heffalump.num_spots %></td>
+      <td><%= heffalump.striped %></td>
+      <td><%= link_to 'Show', "/heffalumps/#{heffalump.id}" %></td>
+      <td><%= link_to 'Edit', edit_heffalump_path(heffalump) %></td>
+      <td><%= link_to 'Destroy', heffalump_path(heffalump), method: :delete, data: { confirm: 'Are you sure?' } %></td>
+    </tr>
+  <% end %>
+</table>
+
+<%= link_to 'New Heffalump', new_heffalump_path %>

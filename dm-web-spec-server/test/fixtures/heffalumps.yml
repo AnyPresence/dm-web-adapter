@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  color: MyString
+  num_spots: 1
+  striped: false
+
+two:
+  color: MyString
+  num_spots: 1
+  striped: false
