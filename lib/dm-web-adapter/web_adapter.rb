@@ -5,7 +5,7 @@ module DataMapper
       def initialize(name, options)
         super
         @options = options
-        @format = :json
+        @format = :html
         @mappings = options.fetch(:mappings)
         @agent = Mechanize.new
         @agent.log = DataMapper.logger
@@ -35,9 +35,11 @@ module DataMapper
 
           begin
             page = @agent.get build_create_url(storage_name.to_sym)
-            create_form = page.form_with :name => build_form_name(storage_name.to_sym)
-            resource.attributes.each do |property, value|
-              create_form.field_with(:name => property.field.to_s).value = value
+            create_form = page.form_with :id => build_form_id(storage_name.to_sym)
+            DataMapper.logger.debug("Create form is #{create_form.inspect}")
+            resource.attributes(key_on=:field).each do |property, value|
+              DataMapper.logger.debug("Setting #{property.inspect} to #{value.inspect}")
+              create_form.field_with(:name => property).value = value
             end
             response = agent.submit
             DataMapper.logger.debug("Result of actual create call is #{response.inspect}")
@@ -93,14 +95,15 @@ module DataMapper
       end
       
       def build_create_url(storage_name)
-        path = configured_mapping(storage_name).fetch(:create_path) + "#{storage_name.to_s}.#{@format.to_s}"
+        configured_path = configured_mapping(storage_name).fetch(:create_path)
+        path = configured_path.nil? ? "#{storage_name.to_s}.#{@format.to_s}" : configured_path
         url = "#{@options[:scheme]}://#{@options[:host]}:#{@options[:port]}/#{path}"
         DataMapper.logger.debug("Will use #{url} to create")
         url
       end
       
-      def build_form_name(storage_name)
-        configured_mapping(storage_name).fetch(:create_form_name)
+      def build_form_id(storage_name)
+        configured_mapping(storage_name).fetch(:create_form_id)
       end
     end
   end

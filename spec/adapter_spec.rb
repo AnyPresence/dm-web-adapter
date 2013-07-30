@@ -3,17 +3,17 @@ require 'spec_helper'
 describe DataMapper::Adapters::WebAdapter do
   
   before :all do
-   @adapter = DataMapper.setup(:default, :adapter => 'web', :scheme => 'http', :host => 'localhost', :port => 5000, :mappings => {
-     :incoming_contacts => {:create_path => 'api/v1/', :create_form_name => 'form' }
+   @adapter = DataMapper.setup(:default, :adapter => 'web', :scheme => 'http', :host => 'localhost', :port => 3000, :mappings => {
+     :heffalumps => {:create_path => 'heffalumps/new', :create_form_id => 'new_heffalump' }
    }
    )      
   end
   
   describe '#create' do
     it 'should not raise any errors' do
-      incoming_contact = IncomingContact.new(:name => 'humpty')
+      heffalump = Heffalump.new(:color => 'red')
       lambda {
-        incoming_contact.save
+        heffalump.save
       }.should_not raise_error
     end
   end
