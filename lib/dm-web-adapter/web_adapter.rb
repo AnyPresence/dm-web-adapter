@@ -10,6 +10,7 @@ module DataMapper
         @agent = Mechanize.new
         @agent.log = DataMapper.logger
         @agent.user_agent_alias = 'Mac Safari'
+        @agent.redirect_ok = false
       end
       
       # Persists one or many new resources
@@ -34,20 +35,29 @@ module DataMapper
           DataMapper.logger.debug("About to create #{model} backed by #{storage_name} using #{resource.attributes}")
 
           begin
-            page = @agent.get build_create_url(storage_name.to_sym)
-            create_form = page.form_with :id => build_form_id(storage_name.to_sym)
+            create_url = build_create_url(storage_name.to_sym)
+            page = @agent.get(create_url) 
+            form_id = build_form_id(storage_name.to_sym)
+            create_form = page.form_with(:id => form_id)
             DataMapper.logger.debug("Create form is #{create_form.inspect}")
-            resource.attributes(key_on=:field).each do |property, value|
+            resource.attributes(key_on=:field).reject{|p,v| v.nil? }.each do |property, value|
               DataMapper.logger.debug("Setting #{property.inspect} to #{value.inspect}")
               field = create_form.field_with(:name => build_property_name(storage_name, property))
               DataMapper.logger.debug("Pulled field #{field.inspect} using #{build_property_name(storage_name, property)}")
               field.value = value
             end
+            @agent.follow_meta_refresh = false
             response = @agent.submit(create_form)
-            DataMapper.logger.debug("Result of actual create call is #{response.inspect}")
-            if response.code == 200
-              result = update_attributes(resource, @agent.get(response.url))
-              created += 1
+            DataMapper.logger.debug("Result of actual create call is #{response.code}")
+            if response.code.to_i == 302
+              redirect_location = response.header['location']
+              DataMapper.logger.debug("Redirect location is #{redirect_location}")
+              id = redirect_location.split('/').last
+              DataMapper.logger.debug("Newly created instance id is #{id}")
+              unless id.nil?
+                initialize_serial(resource, id)
+                created += 1
+              end
             end
           rescue => e
             trace = e.backtrace.join("\n")
@@ -61,6 +71,7 @@ module DataMapper
       private
       
       def update_attributes(resource, body)
+        DataMapper.logger.debug("update_attributes(#{resource}, #{body})")
         return if DataMapper::Ext.blank?(body)
         fields = {}
         model      = resource.model

@@ -22,6 +22,7 @@ describe DataMapper::Adapters::WebAdapter do
       heffalump.save
       heffalump.id.should_not be_nil
     end
+
   end
-  
+
 end
