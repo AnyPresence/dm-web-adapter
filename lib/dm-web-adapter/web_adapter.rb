@@ -39,12 +39,16 @@ module DataMapper
             DataMapper.logger.debug("Create form is #{create_form.inspect}")
             resource.attributes(key_on=:field).each do |property, value|
               DataMapper.logger.debug("Setting #{property.inspect} to #{value.inspect}")
-              create_form.field_with(:name => property).value = value
+              field = create_form.field_with(:name => build_property_name(storage_name, property))
+              DataMapper.logger.debug("Pulled field #{field.inspect} using #{build_property_name(storage_name, property)}")
+              field.value = value
             end
-            response = agent.submit
+            response = @agent.submit(create_form)
             DataMapper.logger.debug("Result of actual create call is #{response.inspect}")
-            result = update_attributes(resource, response.body)
-            created += 1
+            if response.code == 200
+              result = update_attributes(resource, @agent.get(response.url))
+              created += 1
+            end
           rescue => e
             trace = e.backtrace.join("\n")
             DataMapper.logger.error("Failed to create resource: #{e.message}")  
@@ -60,7 +64,7 @@ module DataMapper
         return if DataMapper::Ext.blank?(body)
         fields = {}
         model      = resource.model
-        properties = model.properties(repository_name)
+        properties = model.properties(key_on=:field)
 
         properties.each do |prop| 
           fields[prop.field.to_sym] = prop.name.to_sym 
@@ -104,6 +108,10 @@ module DataMapper
       
       def build_form_id(storage_name)
         configured_mapping(storage_name).fetch(:create_form_id)
+      end
+      
+      def build_property_name(storage_name, property)
+        "#{DataMapper::Inflector.singularize(storage_name.to_s)}[#{property}]"
       end
     end
   end

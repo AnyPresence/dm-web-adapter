@@ -6,5 +6,4 @@ class Heffalump
   property :num_spots, Integer
   property :striped, Boolean
   
-  storage_names[:default] = 'heffalumps'
 end
