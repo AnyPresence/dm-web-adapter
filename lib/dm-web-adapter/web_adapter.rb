@@ -1,6 +1,8 @@
 module DataMapper
   module Adapters
     class WebAdapter < DataMapper::Adapters::AbstractAdapter
+      include DataMapper::Adapters::Web::Parser
+      include DataMapper::Adapters::Web::UrlBuilder
       
       def initialize(name, options)
         super
@@ -46,7 +48,6 @@ module DataMapper
               DataMapper.logger.debug("Pulled field #{field.inspect} using #{build_property_name(storage_name, property)}")
               field.value = value
             end
-            @agent.follow_meta_refresh = false
             response = @agent.submit(create_form)
             DataMapper.logger.debug("Result of actual create call is #{response.code}")
             if response.code.to_i == 302
@@ -68,62 +69,35 @@ module DataMapper
         created
       end
       
-      private
-      
-      def update_attributes(resource, body)
-        DataMapper.logger.debug("update_attributes(#{resource}, #{body})")
-        return if DataMapper::Ext.blank?(body)
-        fields = {}
-        model      = resource.model
-        properties = model.properties(key_on=:field)
-
-        properties.each do |prop| 
-          fields[prop.field.to_sym] = prop.name.to_sym 
+      # Reads one or many resources from a datastore
+      #
+      # @example
+      #   adapter.read(query)  # => [ { 'name' => 'Dan Kubb' } ]
+      #
+      # Adapters provide specific implementation of this method
+      #
+      # @param [Query] query
+      #   the query to match resources in the datastore
+      #
+      # @return [Enumerable<Hash>]
+      #   an array of hashes to become resources
+      #
+      # @api semipublic
+      def read(query)
+        DataMapper.logger.debug("Read #{query.inspect} and its model is #{query.model.inspect}")
+        model = query.model
+        query_url = build_query_url(query)
+        begin
+          page = @agent.get(query_url) 
+          DataMapper.logger.debug("Page was #{page.inspect}")
+          return parse_collection(page, model)
+        rescue => e
+          trace = e.backtrace.join("\n")
+          DataMapper.logger.error("Failed to query: #{e.message}")  
+          DataMapper.logger.error(trace)
         end
-
-        parse_record(body, model).each do |key, value|
-          if property = properties[fields[key.to_sym]]
-            property.set!(resource, value)
-          end
-        end
       end
       
-      def parse_record(json, model)
-        hash = JSON.parse(json)
-        field_to_property = Hash[ properties(model).map { |p| [ p.field, p ] } ]
-        record_from_hash(hash, field_to_property)
-      end
-      
-      def record_from_hash(hash, field_to_property)
-        record = {}
-        hash.each_pair do |field, value|
-          next unless property = field_to_property[field]
-          record[field] = property.typecast(value)
-        end
-
-        record
-      end
-                        
-      def configured_mapping(storage_name)
-        DataMapper.logger.debug("@mappings are #{@mappings.inspect} and storage_name is #{storage_name.inspect}")
-        @mappings.fetch(storage_name)
-      end
-      
-      def build_create_url(storage_name)
-        configured_path = configured_mapping(storage_name).fetch(:create_path)
-        path = configured_path.nil? ? "#{storage_name.to_s}.#{@format.to_s}" : configured_path
-        url = "#{@options[:scheme]}://#{@options[:host]}:#{@options[:port]}/#{path}"
-        DataMapper.logger.debug("Will use #{url} to create")
-        url
-      end
-      
-      def build_form_id(storage_name)
-        configured_mapping(storage_name).fetch(:create_form_id)
-      end
-      
-      def build_property_name(storage_name, property)
-        "#{DataMapper::Inflector.singularize(storage_name.to_s)}[#{property}]"
-      end
     end
   end
 end

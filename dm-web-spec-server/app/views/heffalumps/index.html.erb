@@ -2,6 +2,7 @@
  
 <table>
   <tr>
+    <th>Id</th>
     <th>Color</th>
     <th>Number of Spots</th>
     <th>Striped</th>
@@ -12,6 +13,7 @@
  
   <% @heffalumps.each do |heffalump| %>
     <tr>
+      <td><%= heffalump.id %></td>
       <td><%= heffalump.color %></td>
       <td><%= heffalump.num_spots %></td>
       <td><%= heffalump.striped %></td>
