@@ -25,8 +25,8 @@ module DataMapper
           configured_mapping(storage_name).fetch(:create_form_id)
         end
 
-        def build_property_name(storage_name, property)
-          "#{DataMapper::Inflector.singularize(storage_name.to_s)}[#{property}]"
+        def build_property_form_id(storage_name, property)
+          "#{DataMapper::Inflector.singularize(storage_name.to_s)}_#{property}"
         end
 
         def build_path(storage_name, path_type)

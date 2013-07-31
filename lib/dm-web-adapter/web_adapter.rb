@@ -44,9 +44,18 @@ module DataMapper
             DataMapper.logger.debug("Create form is #{create_form.inspect}")
             resource.attributes(key_on=:field).reject{|p,v| v.nil? }.each do |property, value|
               DataMapper.logger.debug("Setting #{property.inspect} to #{value.inspect}")
-              field = create_form.field_with(:name => build_property_name(storage_name, property))
-              DataMapper.logger.debug("Pulled field #{field.inspect} using #{build_property_name(storage_name, property)}")
-              field.value = value
+              field_form_id = build_property_form_id(storage_name, property)
+              checkbox_field = create_form.checkbox_with(:id => field_form_id)
+              DataMapper.logger.debug("Pulled field #{checkbox_field.inspect} using #{field_form_id}")
+              if value.is_a? TrueClass
+                checkbox_field.check
+              elsif value.is_a? FalseClass
+                checkbox_field.uncheck
+              else
+                field = create_form.field_with(:id => field_form_id)
+                DataMapper.logger.debug("Pulled field #{field.inspect} using #{field_form_id}")
+                field.value = value
+              end
             end
             response = @agent.submit(create_form)
             DataMapper.logger.debug("Result of actual create call is #{response.code}")

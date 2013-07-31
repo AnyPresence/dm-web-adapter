@@ -30,7 +30,7 @@ describe DataMapper::Adapters::WebAdapter do
 
   describe '#read' do
     before :all do
-      @heffalump = Heffalump.create(:color => 'brownish hue')
+      @heffalump = Heffalump.create(:color => 'brownish hue', :striped => false)
     end
 
     it 'should not raise any errors' do
