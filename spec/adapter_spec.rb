@@ -6,8 +6,8 @@ describe DataMapper::Adapters::WebAdapter do
    @adapter = DataMapper.setup(:default, :adapter => 'web', :scheme => 'http', :host => 'localhost', :port => 3000, :mappings => {
      :heffalumps => {
         :create_path => 'heffalumps/new', :create_form_id => 'new_heffalump', 
-        :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump',
-        :query_path  => 'heffalumps', :collection_selector => '/html/body/table//tr/td[position()<5]' 
+        :query_path  => 'heffalumps', :collection_selector => '/html/body/table//tr/td[position()<5]',
+        :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump'
        }
    }
    )      
@@ -30,7 +30,7 @@ describe DataMapper::Adapters::WebAdapter do
 
   describe '#read' do
     before :all do
-      @heffalump = Heffalump.create(:color => 'brownish hue', :striped => false)
+      @heffalump = Heffalump.create!(:color => 'brownish hue', :num_spots => 5, :striped => true)
     end
 
     it 'should not raise any errors' do

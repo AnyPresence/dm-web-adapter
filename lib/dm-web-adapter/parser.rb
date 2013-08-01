@@ -3,8 +3,9 @@ module DataMapper
     module Web
       module Parser
         
-        def parse_collection(page, model)
-          DataMapper.logger.debug("parse_collection(#{page.inspect}, #{model})")
+        def parse_collection(page, model, fields = nil)
+          #TODO: Add fields support. This is what the query provides as the properties to be read
+          DataMapper.logger.debug("parse_collection(#{page.inspect}, #{model}, #{fields})")
           xpath_expression = configured_mapping(model.storage_name).fetch(:collection_selector)
           DataMapper.logger.debug("Will use xpath expression #{xpath_expression}")
           collection = []
@@ -22,12 +23,13 @@ module DataMapper
           collection
         end
   
-        def parse_record(array, properties)
+        def parse_record(values, properties)
           record = {}
-          properties.each do |index, property|
-            value = array[index]
-            DataMapper.logger.debug("Setting #{property.name} = #{value}")
-            record[property.name] = property.typecast(value)
+          values.each_index do |index|
+            next unless value = values[index]
+            property = properties[index]
+            DataMapper.logger.debug("Setting #{property.name} = #{property.typecast(value)}")
+            record[property.field] = property.typecast(value)
           end
           DataMapper.logger.debug("Made record #{record.inspect}")
           record

@@ -33,6 +33,7 @@ module DataMapper
         created = 0
         resources.each do |resource|
           model = resource.model
+          serial = model.serial
           storage_name = model.storage_name(resource.repository)
           DataMapper.logger.debug("About to create #{model} backed by #{storage_name} using #{resource.attributes}")
 
@@ -62,10 +63,10 @@ module DataMapper
             if response.code.to_i == 302
               redirect_location = response.header['location']
               DataMapper.logger.debug("Redirect location is #{redirect_location}")
-              id = redirect_location.split('/').last
+              id = redirect_location.split('/').last.to_i #TODO: proper cast
               DataMapper.logger.debug("Newly created instance id is #{id}")
               unless id.nil?
-                initialize_serial(resource, id)
+                serial.set(resource,id)
                 created += 1
               end
             end
@@ -96,15 +97,18 @@ module DataMapper
         DataMapper.logger.debug("Read #{query.inspect} and its model is #{query.model.inspect}")
         model = query.model
         query_url = build_query_url(query)
+        records = []
         begin
           page = @agent.get(query_url) 
           DataMapper.logger.debug("Page was #{page.inspect}")
-          return parse_collection(page, model)
+          records = parse_collection(page, model, query.fields)
+          DataMapper.logger.debug("Records are #{records.inspect}")
         rescue => e
           trace = e.backtrace.join("\n")
           DataMapper.logger.error("Failed to query: #{e.message}")  
           DataMapper.logger.error(trace)
         end
+        return records
       end
       
     end
