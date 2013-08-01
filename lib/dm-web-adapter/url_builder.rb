@@ -5,12 +5,29 @@ module DataMapper
       
         def configured_mapping(storage_name)
           DataMapper.logger.debug("@mappings are #{@mappings.inspect} and storage_name is #{storage_name.inspect}")
-          @mappings.fetch(storage_name)
+          @mappings.fetch(storage_name.to_sym)
         end
-
+        
+        def build_edit_url(storage_name, id)
+          url = build_path(storage_name,:update_path).gsub(":id",id.to_s)
+          DataMapper.logger.debug("Will use #{url} to update")
+          url
+        end
+        
         def build_query_url(query)
           storage_name = query.model.storage_name(query.repository)
           url = build_path(storage_name,:query_path)
+          id_param = nil
+          query.conditions.each do |condition|
+            if condition.instance_of? ::DataMapper::Query::Conditions::EqualToComparison
+              DataMapper.logger.debug("Handling equal to comparison #{condition.inspect}")
+              id_param = condition.loaded_value
+            else
+              raise "Not yet supported!"
+            end
+          end
+          
+          url += "?query=#{id_param.to_s}" if id_param
           DataMapper.logger.debug("Will use #{url} to read")
           url
         end
@@ -21,11 +38,15 @@ module DataMapper
           url
         end
 
-        def build_form_id(storage_name)
-          configured_mapping(storage_name).fetch(:create_form_id)
+        def build_form_id(storage_name, type, id=nil)
+          form_id = configured_mapping(storage_name).fetch(type)
+          if type == :update_form_id
+            form_id = form_id.gsub(":id",id.to_s)
+          end
+          form_id
         end
 
-        def build_property_form_id(storage_name, property)
+        def build_form_property_id(storage_name, property)
           "#{DataMapper::Inflector.singularize(storage_name.to_s)}_#{property}"
         end
 

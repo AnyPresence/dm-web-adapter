@@ -3,6 +3,7 @@ module DataMapper
     class WebAdapter < DataMapper::Adapters::AbstractAdapter
       include DataMapper::Adapters::Web::Parser
       include DataMapper::Adapters::Web::UrlBuilder
+      include DataMapper::Adapters::Web::FormHelper
       
       def initialize(name, options)
         super
@@ -38,26 +39,13 @@ module DataMapper
           DataMapper.logger.debug("About to create #{model} backed by #{storage_name} using #{resource.attributes}")
 
           begin
-            create_url = build_create_url(storage_name.to_sym)
+            create_url = build_create_url(storage_name)
             page = @agent.get(create_url) 
-            form_id = build_form_id(storage_name.to_sym)
-            create_form = page.form_with(:id => form_id)
+            form_id = build_form_id(storage_name.to_sym, :create_form_id)
+            the_form = page.form_with(:id => form_id)
+            the_properties = resource.attributes(key_on=:field).reject{|p,v| v.nil? }
+            create_form = fill_form(the_form, the_properties, storage_name)
             DataMapper.logger.debug("Create form is #{create_form.inspect}")
-            resource.attributes(key_on=:field).reject{|p,v| v.nil? }.each do |property, value|
-              DataMapper.logger.debug("Setting #{property.inspect} to #{value.inspect}")
-              field_form_id = build_property_form_id(storage_name, property)
-              checkbox_field = create_form.checkbox_with(:id => field_form_id)
-              DataMapper.logger.debug("Pulled field #{checkbox_field.inspect} using #{field_form_id}")
-              if value.is_a? TrueClass
-                checkbox_field.check
-              elsif value.is_a? FalseClass
-                checkbox_field.uncheck
-              else
-                field = create_form.field_with(:id => field_form_id)
-                DataMapper.logger.debug("Pulled field #{field.inspect} using #{field_form_id}")
-                field.value = value
-              end
-            end
             response = @agent.submit(create_form)
             DataMapper.logger.debug("Result of actual create call is #{response.code}")
             if response.code.to_i == 302
@@ -111,6 +99,50 @@ module DataMapper
         return records
       end
       
+      # Updates one or many existing resources
+      #
+      # @example
+      #   adapter.update(attributes, collection)  # => 1
+      #
+      # Adapters provide specific implementation of this method
+      #
+      # @param [Hash(Property => Object)] attributes
+      #   hash of attribute values to set, keyed by Property
+      # @param [Collection] collection
+      #   collection of records to be updated
+      #
+      # @return [Integer]
+      #   the number of records updated
+      #
+      # @api semipublic
+      def update(attributes, collection)
+        DataMapper.logger.debug("Update called with:\nAttributes #{attributes.inspect} \nCollection: #{collection.inspect}")
+        updated = 0
+        the_properties = {}
+        attributes.each{|property, value| the_properties[property.field] = value}
+        collection.each do |resource|
+          model = resource.model
+          storage_name = model.storage_name(resource.repository)
+          id = model.serial.get(resource)
+          DataMapper.logger.debug("Building edit URL with #{model} and #{id}")
+          edit_url = build_edit_url(storage_name, id)
+          begin
+            page = @agent.get(edit_url) 
+            form_id = build_form_id(storage_name, :update_form_id, id)
+            DataMapper.logger.debug("Form id is #{form_id}")
+            the_form = page.form_with(:id => form_id)
+            update_form = fill_form(the_form, the_properties, storage_name)
+            DataMapper.logger.debug("Update form is #{update_form.inspect}")
+            response = @agent.submit(update_form)
+            DataMapper.logger.debug("Result of actual update call is #{response.code}")
+            updated += 1
+          rescue => e
+            DataMapper.logger.error("Failure while updating #{e.inspect}")
+          end
+        end
+
+        updated
+      end
     end
   end
 end

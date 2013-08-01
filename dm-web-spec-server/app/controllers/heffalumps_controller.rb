@@ -1,7 +1,11 @@
 class HeffalumpsController < ApplicationController
   
   def index
-    @heffalumps = Heffalump.all
+    if params[:query]
+      @heffalumps = [Heffalump.find(params[:query])]
+    else
+      @heffalumps = Heffalump.all
+    end
   end
   
   def show

@@ -7,7 +7,7 @@ describe DataMapper::Adapters::WebAdapter do
      :heffalumps => {
         :create_path => 'heffalumps/new', :create_form_id => 'new_heffalump', 
         :query_path  => 'heffalumps', :collection_selector => '/html/body/table//tr/td[position()<5]',
-        :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump'
+        :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump_:id'
        }
    }
    )      
@@ -16,12 +16,12 @@ describe DataMapper::Adapters::WebAdapter do
   describe '#create' do
     it 'should not raise any errors' do
       lambda {
-        Heffalump.create(:color => 'peach')
+        heffalump_model.create(:color => 'peach')
       }.should_not raise_error
     end
 
     it 'should set the identity field for the resource' do
-      heffalump = Heffalump.new(:color => 'peach')
+      heffalump = heffalump_model.new(:color => 'peach')
       heffalump.id.should be_nil
       heffalump.save
       heffalump.id.should_not be_nil
@@ -30,18 +30,50 @@ describe DataMapper::Adapters::WebAdapter do
 
   describe '#read' do
     before :all do
-      @heffalump = Heffalump.create!(:color => 'brownish hue', :num_spots => 5, :striped => true)
+      @heffalump = heffalump_model.create!(:color => 'brownish hue', :num_spots => 5, :striped => true)
     end
 
     it 'should not raise any errors' do
       lambda {
-        Heffalump.all()
+        heffalump_model.all()
       }.should_not raise_error
     end
 
     it 'should return stuff' do
-      Heffalump.all.should be_include(@heffalump)
+      heffalump_model.all.should be_include(@heffalump)
     end
   end
-      
+  describe '#update' do
+    before do
+      @heffalump = heffalump_model.create(:color => 'indigo')
+    end
+
+    it 'should not raise any errors' do
+      lambda {
+        @heffalump.color = 'violet'
+        @heffalump.save
+      }.should_not raise_error
+    end
+
+    it 'should not alter the identity field' do
+      id = @heffalump.id
+      @heffalump.color = 'violet'
+      @heffalump.save
+      @heffalump.id.should == id
+    end
+
+    it 'should update altered fields' do
+      @heffalump.color = 'violet'
+      @heffalump.save
+      heffalump_model.get(*@heffalump.key).color.should == 'violet'
+    end
+
+    it 'should not alter other fields' do
+      color = @heffalump.color
+      @heffalump.num_spots = 3
+      @heffalump.save
+      heffalump_model.get(*@heffalump.key).color.should == color
+    end
+  end
+       
 end
