@@ -14,6 +14,18 @@ module DataMapper
           url
         end
         
+        def build_all_url(storage_name)
+          url = build_path(storage_name,:query_path)
+          DataMapper.logger.debug("Will use #{url} to read all")
+          url
+        end
+        
+        def build_delete_link(storage_name, id)
+          url = build_path(storage_name,:delete_path).gsub(":id",id.to_s)
+          DataMapper.logger.debug("Will use #{url} to destroy")
+          url
+        end
+        
         def build_query_url(query)
           storage_name = query.model.storage_name(query.repository)
           url = build_path(storage_name,:query_path)

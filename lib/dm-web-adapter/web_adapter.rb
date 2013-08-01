@@ -145,6 +145,53 @@ module DataMapper
 
         updated
       end
+      
+      # Deletes one or many existing resources
+      #
+      # @example
+      #   adapter.delete(collection)  # => 1
+      #
+      # Adapters provide specific implementation of this method
+      #
+      # @param [Collection] collection
+      #   collection of records to be deleted
+      #
+      # @return [Integer]
+      #   the number of records deleted
+      #
+      # @api semipublic
+      def delete(collection)
+        DataMapper.logger.debug("Delete called with: #{collection.inspect}")
+        deleted = 0
+        model = collection.first.model
+        storage_name = model.storage_name
+        all_url = build_all_url(storage_name)
+        page = @agent.get(all_url) 
+        DataMapper.logger.debug("Page was #{page.inspect}")
+        records = parse_collection(page, model)
+         
+        collection.each do |resource|
+          begin
+            id = model.serial.get(resource)
+            delete_link = build_delete_link(storage_name, id)
+            DataMapper.logger.debug("Delete link is #{delete_link}")
+            #actual_delete_link = page.link_with(:href => delete_link, :text => 'Destroy')
+            # No can do Javascript prompts, so...
+            response = @agent.delete(delete_link)
+            DataMapper.logger.debug("Result of actual delete call is #{response.code}")
+            if response.code.to_i == 302
+              deleted += 1
+            else
+              DataMapper.logger.error("Failure while deleting #{response.inspect}")
+            end
+          rescue => e
+            DataMapper.logger.error("Failure while deleting #{e.inspect}")
+          end
+        end
+
+        deleted
+      end
+      
     end
   end
 end

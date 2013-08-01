@@ -7,7 +7,8 @@ describe DataMapper::Adapters::WebAdapter do
      :heffalumps => {
         :create_path => 'heffalumps/new', :create_form_id => 'new_heffalump', 
         :query_path  => 'heffalumps', :collection_selector => '/html/body/table//tr/td[position()<5]',
-        :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump_:id'
+        :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump_:id',
+        :delete_path => 'heffalumps/:id'
        }
    }
    )      
@@ -75,5 +76,22 @@ describe DataMapper::Adapters::WebAdapter do
       heffalump_model.get(*@heffalump.key).color.should == color
     end
   end
-       
+  
+  describe '#delete' do
+    before do
+      @heffalump = heffalump_model.create(:color => 'forest green')
+    end
+
+    it 'should not raise any errors' do
+      lambda {
+        @heffalump.destroy
+      }.should_not raise_error
+    end
+
+    it 'should delete the requested resource' do
+      id = @heffalump.id
+      @heffalump.destroy
+      heffalump_model.get(id).should be_nil
+    end
+  end
 end
