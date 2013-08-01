@@ -1,16 +1,21 @@
-<p>
-  <strong>Color:</strong>
-  <%= @heffalump.color %>
-</p>
+<table>
+  <tr>
+    <th>Id</th>
+    <th>Color</th>
+    <th>Number of Spots</th>
+    <th>Striped</th>
+    <th/>
+    <th/>
+    <th/>
+  </tr>
  
-<p>
-  <strong>Number of Spots:</strong>
-  <%= @heffalump.num_spots %>
-</p>
+  <tr>
+    <td><%= @heffalump.id %></td>
+    <td><%= @heffalump.color %></td>
+    <td><%= @heffalump.num_spots %></td>
+    <td><%= @heffalump.striped %></td>
+  </tr>
 
-<p>
-  <strong>Striped:</strong>
-  <%= @heffalump.striped %>
-</p>
+</table>
 
 <%= link_to 'Back', heffalumps_path %> | <%= link_to 'Edit', edit_heffalump_path(@heffalump) %>

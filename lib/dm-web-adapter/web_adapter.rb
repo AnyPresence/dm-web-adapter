@@ -135,7 +135,9 @@ module DataMapper
             DataMapper.logger.debug("Update form is #{update_form.inspect}")
             response = @agent.submit(update_form)
             DataMapper.logger.debug("Result of actual update call is #{response.code}")
-            updated += 1
+            if response.code.to_i == 302
+              updated += 1
+            end
           rescue => e
             DataMapper.logger.error("Failure while updating #{e.inspect}")
           end

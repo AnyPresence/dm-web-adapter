@@ -27,7 +27,7 @@ module DataMapper
             end
           end
           
-          url += "?query=#{id_param.to_s}" if id_param
+          url += "/#{id_param.to_s}" if id_param
           DataMapper.logger.debug("Will use #{url} to read")
           url
         end
