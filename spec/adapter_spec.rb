@@ -27,6 +27,12 @@ describe DataMapper::Adapters::WebAdapter do
       heffalump.save
       heffalump.id.should_not be_nil
     end
+    
+    it 'should not set the identity field for the resource if validation fails' do
+      heffalump = heffalump_model.new(:color => 'o')
+      heffalump.save
+      heffalump.id.should be_nil
+    end
   end
 
   describe '#read' do
