@@ -6,7 +6,6 @@ module DataMapper
       include DataMapper::Adapters::Web::FormHelper
       
       def initialize(name, options)
-        puts "Initializing #{name} with #{options.inspect}"
         super
         @options = options
         @format = :html
