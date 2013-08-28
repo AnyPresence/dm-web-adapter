@@ -5,21 +5,21 @@ module DataMapper
         
         def parse_collection(page, model, fields = nil)
           #TODO: Add fields support. This is what the query provides as the properties to be read
-          DataMapper.logger.debug("parse_collection(#{page.inspect}, #{model}, #{fields})")
+          @log.debug("parse_collection(#{page.inspect}, #{model}, #{fields})")
           xpath_expression = configured_mapping(model.storage_name).fetch(:collection_selector)
-          DataMapper.logger.debug("Will use xpath expression #{xpath_expression}")
+          @log.debug("Will use xpath expression #{xpath_expression}")
           collection = []
           array = page.search(xpath_expression)
           properties = make_indexed_property_hash(model)
-          DataMapper.logger.debug("Will use properties #{properties.inspect}")
+          @log.debug("Will use properties #{properties.inspect}")
           i = 0
           while i < array.size
             element = array[i,properties.size].map{|e| e.text.empty? ? nil : e.text }
-            DataMapper.logger.debug("Array about to process is " + element.inspect)
+            @log.debug("Array about to process is " + element.inspect)
             collection << parse_record(element, properties)
             i += properties.size
           end
-          DataMapper.logger.debug("Made collection #{collection.inspect}")
+          @log.debug("Made collection #{collection.inspect}")
           collection
         end
   
@@ -28,16 +28,16 @@ module DataMapper
           values.each_index do |index|
             next unless value = values[index]
             property = properties[index]
-            DataMapper.logger.debug("Setting #{property.name} = #{property.typecast(value)}")
+            @log.debug("Setting #{property.name} = #{property.typecast(value)}")
             record[property.field] = property.typecast(value)
           end
-          DataMapper.logger.debug("Made record #{record.inspect}")
+          @log.debug("Made record #{record.inspect}")
           record
         end
   
         
         def update_attributes(resource, body)
-          DataMapper.logger.debug("update_attributes(#{resource}, #{body})")
+          @log.debug("update_attributes(#{resource}, #{body})")
           return if DataMapper::Ext.blank?(body)
           fields = {}
           model      = resource.model

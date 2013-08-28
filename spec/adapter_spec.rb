@@ -3,7 +3,8 @@ require 'spec_helper'
 describe DataMapper::Adapters::WebAdapter do
   
   before :all do
-   @adapter = DataMapper.setup(:default, :adapter => 'web', :scheme => 'http', :host => 'localhost', :port => 3000, :mappings => {
+   @adapter = DataMapper.setup(:default, :adapter => 'web', :scheme => 'http', :host => 'localhost', :port => 3000, :logging_level => 'debug',
+   :mappings => {
      :heffalumps => {
         :create_path => 'heffalumps/new', :create_form_id => 'new_heffalump', 
         :query_path  => 'heffalumps', :collection_selector => '/html/body/table//tr/td[position()<5]',

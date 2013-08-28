@@ -4,25 +4,25 @@ module DataMapper
       module UrlBuilder
       
         def configured_mapping(storage_name)
-          DataMapper.logger.debug("@mappings are #{@mappings.inspect} and storage_name is #{storage_name.inspect}")
+          @log.debug("@mappings are #{@mappings.inspect} and storage_name is #{storage_name.inspect}")
           @mappings.fetch(storage_name.to_sym)
         end
         
         def build_edit_url(storage_name, id)
           url = build_path(storage_name,:update_path).gsub(":id",id.to_s)
-          DataMapper.logger.debug("Will use #{url} to update")
+          @log.debug("Will use #{url} to update")
           url
         end
         
         def build_all_url(storage_name)
           url = build_path(storage_name,:query_path)
-          DataMapper.logger.debug("Will use #{url} to read all")
+          @log.debug("Will use #{url} to read all")
           url
         end
         
         def build_delete_link(storage_name, id)
           url = build_path(storage_name,:delete_path).gsub(":id",id.to_s)
-          DataMapper.logger.debug("Will use #{url} to destroy")
+          @log.debug("Will use #{url} to destroy")
           url
         end
         
@@ -32,7 +32,7 @@ module DataMapper
           id_param = nil
           query.conditions.each do |condition|
             if condition.instance_of? ::DataMapper::Query::Conditions::EqualToComparison
-              DataMapper.logger.debug("Handling equal to comparison #{condition.inspect}")
+              @log.debug("Handling equal to comparison #{condition.inspect}")
               id_param = condition.loaded_value
             else
               raise "Not yet supported!"
@@ -40,13 +40,13 @@ module DataMapper
           end
           
           url += "/#{id_param.to_s}" if id_param
-          DataMapper.logger.debug("Will use #{url} to read")
+          @log.debug("Will use #{url} to read")
           url
         end
 
         def build_create_url(storage_name)
           url = build_path(storage_name,:create_path)
-          DataMapper.logger.debug("Will use #{url} to create")
+          @log.debug("Will use #{url} to create")
           url
         end
 

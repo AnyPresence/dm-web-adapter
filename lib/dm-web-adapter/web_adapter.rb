@@ -11,9 +11,23 @@ module DataMapper
         @format = :html
         @mappings = options.fetch(:mappings)
         @agent = Mechanize.new
-        @agent.log = DataMapper.logger
         @agent.user_agent_alias = 'Mac Safari'
         @agent.redirect_ok = false
+        initialize_logger
+      end
+      
+      def initialize_logger
+        level = 'error'
+
+        if @options[:logging_level] && %w[ off fatal error warn info debug ].include?(@options[:logging_level].downcase)
+          level = @options[:logging_level].downcase
+        end
+        DataMapper::Logger.new($stdout,level)
+        @log = DataMapper.logger
+        if level == 'debug'
+          @log.debug("Adding agent debugging proxy")
+          @agent.log = @log
+        end
       end
       
       # Persists one or many new resources
@@ -36,7 +50,7 @@ module DataMapper
           model = resource.model
           serial = model.serial
           storage_name = model.storage_name(resource.repository)
-          DataMapper.logger.debug("About to create #{model} backed by #{storage_name} using #{resource.attributes}")
+          @log.debug("About to create #{model} backed by #{storage_name} using #{resource.attributes}")
 
           begin
             create_url = build_create_url(storage_name)
@@ -45,14 +59,14 @@ module DataMapper
             the_form = page.form_with(:id => form_id)
             the_properties = resource.attributes(key_on=:field).reject{|p,v| v.nil? }
             create_form = fill_form(the_form, the_properties, storage_name)
-            DataMapper.logger.debug("Create form is #{create_form.inspect}")
+            @log.debug("Create form is #{create_form.inspect}")
             response = @agent.submit(create_form)
-            DataMapper.logger.debug("Result of actual create call is #{response.code}")
+            @log.debug("Result of actual create call is #{response.code}")
             if response.code.to_i == 302
               redirect_location = response.header['location']
-              DataMapper.logger.debug("Redirect location is #{redirect_location}")
+              @log.debug("Redirect location is #{redirect_location}")
               id = redirect_location.split('/').last.to_i #TODO: proper cast
-              DataMapper.logger.debug("Newly created instance id is #{id}")
+              @log.debug("Newly created instance id is #{id}")
               unless id.nil?
                 serial.set(resource,id)
                 created += 1
@@ -60,8 +74,8 @@ module DataMapper
             end
           rescue => e
             trace = e.backtrace.join("\n")
-            DataMapper.logger.error("Failed to create resource: #{e.message}")  
-            DataMapper.logger.error(trace)  
+            @log.error("Failed to create resource: #{e.message}")  
+            @log.error(trace)  
           end
         end
         created
@@ -82,19 +96,19 @@ module DataMapper
       #
       # @api semipublic
       def read(query)
-        DataMapper.logger.debug("Read #{query.inspect} and its model is #{query.model.inspect}")
+        @log.debug("Read #{query.inspect} and its model is #{query.model.inspect}")
         model = query.model
         query_url = build_query_url(query)
         records = []
         begin
           page = @agent.get(query_url) 
-          DataMapper.logger.debug("Page was #{page.inspect}")
+          @log.debug("Page was #{page.inspect}")
           records = parse_collection(page, model, query.fields)
-          DataMapper.logger.debug("Records are #{records.inspect}")
+          @log.debug("Records are #{records.inspect}")
         rescue => e
           trace = e.backtrace.join("\n")
-          DataMapper.logger.error("Failed to query: #{e.message}")  
-          DataMapper.logger.error(trace)
+          @log.error("Failed to query: #{e.message}")  
+          @log.error(trace)
         end
         return records
       end
@@ -116,7 +130,7 @@ module DataMapper
       #
       # @api semipublic
       def update(attributes, collection)
-        DataMapper.logger.debug("Update called with:\nAttributes #{attributes.inspect} \nCollection: #{collection.inspect}")
+        @log.debug("Update called with:\nAttributes #{attributes.inspect} \nCollection: #{collection.inspect}")
         updated = 0
         the_properties = {}
         attributes.each{|property, value| the_properties[property.field] = value}
@@ -124,22 +138,22 @@ module DataMapper
           model = resource.model
           storage_name = model.storage_name(resource.repository)
           id = model.serial.get(resource)
-          DataMapper.logger.debug("Building edit URL with #{model} and #{id}")
+          @log.debug("Building edit URL with #{model} and #{id}")
           edit_url = build_edit_url(storage_name, id)
           begin
             page = @agent.get(edit_url) 
             form_id = build_form_id(storage_name, :update_form_id, id)
-            DataMapper.logger.debug("Form id is #{form_id}")
+            @log.debug("Form id is #{form_id}")
             the_form = page.form_with(:id => form_id)
             update_form = fill_form(the_form, the_properties, storage_name)
-            DataMapper.logger.debug("Update form is #{update_form.inspect}")
+            @log.debug("Update form is #{update_form.inspect}")
             response = @agent.submit(update_form)
-            DataMapper.logger.debug("Result of actual update call is #{response.code}")
+            @log.debug("Result of actual update call is #{response.code}")
             if response.code.to_i == 302
               updated += 1
             end
           rescue => e
-            DataMapper.logger.error("Failure while updating #{e.inspect}")
+            @log.error("Failure while updating #{e.inspect}")
           end
         end
 
@@ -161,31 +175,31 @@ module DataMapper
       #
       # @api semipublic
       def delete(collection)
-        DataMapper.logger.debug("Delete called with: #{collection.inspect}")
+        @log.debug("Delete called with: #{collection.inspect}")
         deleted = 0
         model = collection.first.model
         storage_name = model.storage_name
         all_url = build_all_url(storage_name)
         page = @agent.get(all_url) 
-        DataMapper.logger.debug("Page was #{page.inspect}")
+        @log.debug("Page was #{page.inspect}")
         records = parse_collection(page, model)
          
         collection.each do |resource|
           begin
             id = model.serial.get(resource)
             delete_link = build_delete_link(storage_name, id)
-            DataMapper.logger.debug("Delete link is #{delete_link}")
+            @log.debug("Delete link is #{delete_link}")
             #actual_delete_link = page.link_with(:href => delete_link, :text => 'Destroy')
             # No can do Javascript prompts, so...
             response = @agent.delete(delete_link)
-            DataMapper.logger.debug("Result of actual delete call is #{response.code}")
+            @log.debug("Result of actual delete call is #{response.code}")
             if response.code.to_i == 302
               deleted += 1
             else
-              DataMapper.logger.error("Failure while deleting #{response.inspect}")
+              @log.error("Failure while deleting #{response.inspect}")
             end
           rescue => e
-            DataMapper.logger.error("Failure while deleting #{e.inspect}")
+            @log.error("Failure while deleting #{e.inspect}")
           end
         end
 
