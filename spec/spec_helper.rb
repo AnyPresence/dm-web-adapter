@@ -27,5 +27,5 @@ RSpec.configure do |config|
 end
 
 def heffalump_model
-  Heffalump
+  V1::Heffalump
 end

@@ -49,16 +49,16 @@ module DataMapper
         resources.each do |resource|
           model = resource.model
           serial = model.serial
-          storage_name = model.storage_name(resource.repository)
-          @log.debug("About to create #{model} backed by #{storage_name} using #{resource.attributes}")
+          class_name = class_name(model)
+          @log.debug("About to create #{model} backed by #{class_name} using #{resource.attributes}")
 
           begin
-            create_url = build_create_url(storage_name)
+            create_url = build_create_url(class_name)
             page = @agent.get(create_url) 
-            form_id = build_form_id(storage_name.to_sym, :create_form_id)
+            form_id = build_form_id(class_name.to_sym, :create_form_id)
             the_form = page.form_with(:id => form_id)
             the_properties = resource.attributes(key_on=:field).reject{|p,v| v.nil? }
-            create_form = fill_form(the_form, the_properties, storage_name)
+            create_form = fill_form(the_form, the_properties, class_name)
             @log.debug("Create form is #{create_form.inspect}")
             response = @agent.submit(create_form)
             @log.debug("Result of actual create call is #{response.code}")
@@ -136,16 +136,16 @@ module DataMapper
         attributes.each{|property, value| the_properties[property.field] = value}
         collection.each do |resource|
           model = resource.model
-          storage_name = model.storage_name(resource.repository)
+          class_name = class_name(model)
           id = model.serial.get(resource)
           @log.debug("Building edit URL with #{model} and #{id}")
-          edit_url = build_edit_url(storage_name, id)
+          edit_url = build_edit_url(class_name, id)
           begin
             page = @agent.get(edit_url) 
-            form_id = build_form_id(storage_name, :update_form_id, id)
+            form_id = build_form_id(class_name, :update_form_id, id)
             @log.debug("Form id is #{form_id}")
             the_form = page.form_with(:id => form_id)
-            update_form = fill_form(the_form, the_properties, storage_name)
+            update_form = fill_form(the_form, the_properties, class_name)
             @log.debug("Update form is #{update_form.inspect}")
             response = @agent.submit(update_form)
             @log.debug("Result of actual update call is #{response.code}")
@@ -178,8 +178,8 @@ module DataMapper
         @log.debug("Delete called with: #{collection.inspect}")
         deleted = 0
         model = collection.first.model
-        storage_name = model.storage_name
-        all_url = build_all_url(storage_name)
+        class_name = class_name(model)
+        all_url = build_all_url(class_name)
         page = @agent.get(all_url) 
         @log.debug("Page was #{page.inspect}")
         records = parse_collection(page, model)
@@ -187,7 +187,7 @@ module DataMapper
         collection.each do |resource|
           begin
             id = model.serial.get(resource)
-            delete_link = build_delete_link(storage_name, id)
+            delete_link = build_delete_link(class_name, id)
             @log.debug("Delete link is #{delete_link}")
             #actual_delete_link = page.link_with(:href => delete_link, :text => 'Destroy')
             # No can do Javascript prompts, so...

@@ -6,7 +6,7 @@ module DataMapper
         def parse_collection(page, model, fields = nil)
           #TODO: Add fields support. This is what the query provides as the properties to be read
           @log.debug("parse_collection(#{page.inspect}, #{model}, #{fields})")
-          xpath_expression = configured_mapping(model.storage_name).fetch(:collection_selector)
+          xpath_expression = configured_mapping(class_name(model)).fetch(:collection_selector)
           @log.debug("Will use xpath expression #{xpath_expression}")
           collection = []
           array = page.search(xpath_expression)

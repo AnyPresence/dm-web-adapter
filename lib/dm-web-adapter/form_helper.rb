@@ -3,11 +3,11 @@ module DataMapper
     module Web
       module FormHelper
         
-        def fill_form(form, properties, storage_name)
-          @log.debug("Fill form #{form.inspect} with #{properties.inspect} and storage name #{storage_name.inspect}")
+        def fill_form(form, properties, class_name)
+          @log.debug("Fill form #{form.inspect} with #{properties.inspect} and storage name #{class_name.inspect}")
           properties.each do |property, value|
             @log.debug("Setting #{property.inspect} to #{value.inspect}")
-            field_form_id = build_form_property_id(storage_name, property)
+            field_form_id = build_form_property_id(class_name, property)
             checkbox_field = form.checkbox_with(:id => field_form_id)
             @log.debug("Pulled field #{checkbox_field.inspect} using #{field_form_id}")
             if value.is_a? TrueClass
