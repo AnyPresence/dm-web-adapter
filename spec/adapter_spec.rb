@@ -7,7 +7,8 @@ describe DataMapper::Adapters::WebAdapter do
    :mappings => {
      :heffalumps => {
         :create_path => 'heffalumps/new', :create_form_id => 'new_heffalump', 
-        :query_path  => 'heffalumps', :collection_selector => '/html/body/table//tr/td[position()<5]',
+        :query_path  => 'heffalumps', :collection_selector => '/html/body/div/div/div/table/tbody//tr/td[position()<5]',
+        :record_selector => '/html/body/div/div/div/dl//dd',
         :update_path => 'heffalumps/:id/edit', :update_form_id => 'edit_heffalump_:id',
         :delete_path => 'heffalumps/:id'
        }

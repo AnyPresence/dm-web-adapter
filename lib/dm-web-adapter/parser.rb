@@ -7,9 +7,22 @@ module DataMapper
           #TODO: Add fields support. This is what the query provides as the properties to be read
           @log.debug("parse_collection(#{page.inspect}, #{model}, #{fields})")
           xpath_expression = configured_mapping(class_name(model)).fetch(:collection_selector)
+          collection = parse_collection_using_expression(page, model, fields, xpath_expression)
+          
+          if collection.empty? # Fallback on single record selector lest it's a "show" page
+            xpath_expression = configured_mapping(class_name(model)).fetch(:record_selector)
+            collection = parse_collection_using_expression(page, model, fields, xpath_expression)
+          end
+          
+          @log.debug("Made collection #{collection.inspect}")
+          collection
+        end
+        
+        def parse_collection_using_expression(page, model, fields, xpath_expression)
           @log.debug("Will use xpath expression #{xpath_expression}")
           collection = []
           array = page.search(xpath_expression)
+          @log.debug("Array is #{array.inspect}")
           properties = make_indexed_property_hash(model)
           @log.debug("Will use properties #{properties.inspect}")
           i = 0
@@ -19,10 +32,9 @@ module DataMapper
             collection << parse_record(element, properties)
             i += properties.size
           end
-          @log.debug("Made collection #{collection.inspect}")
           collection
         end
-  
+        
         def parse_record(values, properties)
           record = {}
           values.each_index do |index|
