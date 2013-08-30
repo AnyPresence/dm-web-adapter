@@ -17,7 +17,7 @@ module DataMapper
       end
       
       def initialize_logger
-        level = 'debug' # 'error'
+        level = 'error'
 
         if @options[:logging_level] && %w[ off fatal error warn info debug ].include?(@options[:logging_level].downcase)
           level = @options[:logging_level].downcase
