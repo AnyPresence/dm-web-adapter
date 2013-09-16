@@ -207,5 +207,7 @@ module DataMapper
       end
       
     end
+    
+    self.send(:const_added, :WebAdapter)
   end
 end
